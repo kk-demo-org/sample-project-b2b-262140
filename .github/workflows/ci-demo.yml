@@ -34,11 +34,18 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-west-2' }}
         run: |
           echo "Validating AWS credentials..."
-          aws sts get-caller-identity
-          if [ $? -eq 0 ]; then
+          echo "Checking AWS CLI installation..."
+          aws --version || { echo "AWS CLI not installed."; exit 1; }
+          
+          echo "Attempting to get caller identity..."
+          RESPONSE=$(aws sts get-caller-identity --output json 2>&1)
+          
+          if echo "$RESPONSE" | grep -q 'Arn'; then
             echo "AWS credentials are valid."
+            echo "Caller Identity: $RESPONSE"
           else
-            echo "AWS credentials validation failed."
+            echo "AWS credentials validation failed. Full response:"
+            echo "$RESPONSE"
             exit 1
           fi
 
